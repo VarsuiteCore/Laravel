@@ -25,6 +25,8 @@ class SyncJob implements ShouldBeUnique, ShouldQueue
     public function handle(CoreApi $api, LaravelEnvironment $environment): void
     {
         $api->syncData($environment->toArray());
+
+        cache()->put('vscore.synced', now()->timestamp);
     }
 
     public function failed(): void

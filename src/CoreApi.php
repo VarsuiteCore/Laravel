@@ -33,16 +33,12 @@ class CoreApi
         $url = (self::DEBUG ? $this->testUrl : $this->prodUrl) . '/' . $url;
 
         // Generate signature
-        if ($method !== 'GET') {
-            $body = isset($data) ? json_encode($data) : '';
-            $signature = hash_hmac('sha256', $body, $key);
-        } else {
-            $body = $data;
-            $signature = hash_hmac('sha256', '', $key);
-        }
+        $body = isset($data) ? json_encode($data) : '';
+        $signature = hash_hmac('sha256', $body, $key);
 
         // Send request
         $response = Http::acceptJson()
+            ->acceptJson()
             ->asJson()
             ->withToken($key)
             ->withHeader('Signature', $signature)
@@ -72,5 +68,30 @@ class CoreApi
         }
 
         return $body;
+    }
+
+    public function startBackupUpload(string $siteId, string $backupId, string $checksum): \stdClass
+    {
+        return $this->send('GET', "site/{$siteId}/backup/{$backupId}", ['checksum' => $checksum])->data;
+    }
+
+    public function getUploadPart(string $siteId, string $backupId): \stdClass
+    {
+        return $this->send('POST', "site/{$siteId}/backup/{$backupId}")->data;
+    }
+
+    public function markBackupComplete(string $siteId, string $backupId, array $partChecksums): void
+    {
+        $this->send('PUT', "site/{$siteId}/backup/{$backupId}", [
+            'success' => true,
+            'part_checksums' => $partChecksums,
+        ]);
+    }
+
+    public function markBackupFailed(string $siteId, string $backupId): void
+    {
+        $this->send('PUT', "site/{$siteId}/backup/{$backupId}", [
+            'success' => false,
+        ]);
     }
 }

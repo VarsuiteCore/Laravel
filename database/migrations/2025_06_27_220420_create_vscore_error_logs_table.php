@@ -16,7 +16,7 @@ class CreateVSCoreErrorLogsTable extends Migration {
             $table->integer('line');
             $table->text('context')->nullable();
             $table->integer('occurrences')->default(1);
-            $table->timestamp('last_occurrence');
+            $table->bigInteger('last_occurrence');
         });
     }
 

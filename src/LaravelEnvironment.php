@@ -2,19 +2,13 @@
 
 namespace VarsuiteCore;
 
-use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Auth\User;
-use Illuminate\Support\Benchmark;
+use App\Models\User;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Fluent;
-use Symfony\Component\Process\Process;
 
-/**
- * Gathers all sync data about this Laravel installation.
- *
- * @internal
- */
 class LaravelEnvironment
 {
     private Application $app;
@@ -67,11 +61,13 @@ class LaravelEnvironment
 
         $packages = [];
         $installed = Process::fromShellCommandline('composer show --direct --format=json')
+            ->setWorkingDirectory(base_path())
             ->mustRun()
             ->getOutput();
         $installed = (new Fluent(json_decode($installed)))->array('installed');
 
         $updates = Process::fromShellCommandline('composer outdated --format=json')
+            ->setWorkingDirectory(base_path())
             ->mustRun()
             ->getOutput();
         $updates = (new Fluent(json_decode($updates)))
@@ -141,14 +137,6 @@ class LaravelEnvironment
 
     public function errorLogs(): array
     {
-        DB::table('vscore_error_logs') // @todo remove
-            ->insert([
-                'code' => 1234,
-                'file' => 'test.php',
-                'line' => 123,
-                'message' => 'Testing',
-                'last_occurrence' => now(),
-            ]);
         $records = DB::table('vscore_error_logs')
             ->latest('last_occurrence')
             ->limit(100)
@@ -167,7 +155,7 @@ class LaravelEnvironment
 
         // Database response time
         try {
-            $responseTimeMs = Benchmark::measure(function () {
+            $responseTimeMs = $this->measureExecutionTime(function () {
                 DB::table('vscore_error_logs')->count();
             });
 
@@ -258,5 +246,20 @@ class LaravelEnvironment
         }
 
         return $applicationHealth;
+    }
+
+    /**
+     * Measure execution time in milliseconds (Laravel 9+ compatible)
+     * 
+     * @param callable $callback
+     * @return float
+     */
+    private function measureExecutionTime(callable $callback): float
+    {
+        $start = microtime(true);
+        $callback();
+        $end = microtime(true);
+        
+        return round(($end - $start) * 1000, 2);
     }
 }

@@ -3,6 +3,7 @@
 namespace VarsuiteCore;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Support\ServiceProvider;
 use VarsuiteCore\Console\Commands\SyncCommand;
@@ -11,6 +12,14 @@ use VarsuiteCore\Console\Commands\TestCommand;
 class VarsuiteCoreServiceProvider extends ServiceProvider
 {
     private const VERSION = '0.0.1';
+
+    public function register(): void
+    {
+        // Decorate Laravel's exception handler with ours
+        $this->app->extend(ExceptionHandler::class, function ($handler, $app) {
+            return new CoreExceptionHandler($handler);
+        });
+    }
 
     public function boot(): void
     {
