@@ -6,10 +6,14 @@ use Illuminate\Session\Middleware\StartSession;
 use VarsuiteCore\Http\Controllers\BackupController;
 use VarsuiteCore\Http\Controllers\CoreController;
 use VarsuiteCore\Http\Controllers\PackageController;
+use VarsuiteCore\Http\Controllers\SiteController;
 use VarsuiteCore\Http\Controllers\SSOController;
 use VarsuiteCore\Http\Controllers\UserController;
 
 Route::prefix('api/vscore')->group(function() {
+    // Site sync data
+    Route::get('site', [SiteController::class, 'show']);
+
     // Backups
     Route::post('site/{siteId}/backup/{backupId}/create', [BackupController::class, 'store']);
 

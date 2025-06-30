@@ -5,9 +5,12 @@ namespace VarsuiteCore;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Console\AboutCommand;
+use Illuminate\Foundation\Http\Events\RequestHandled;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use VarsuiteCore\Console\Commands\SyncCommand;
 use VarsuiteCore\Console\Commands\TestCommand;
+use VarsuiteCore\Listeners\SyncFallbackListener;
 
 class VarsuiteCoreServiceProvider extends ServiceProvider
 {
@@ -59,5 +62,8 @@ class VarsuiteCoreServiceProvider extends ServiceProvider
                 ->onOneServer()
                 ->withoutOverlapping();
         });
+
+        // Event fallback if task scheduler has not been running
+        Event::listen(RequestHandled::class, SyncFallbackListener::class);
     }
 }
