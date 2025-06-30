@@ -12,7 +12,7 @@ use VarsuiteCore\Exceptions\InvalidSiteKeyException;
  */
 class CoreApi
 {
-    private const DEBUG = true;
+    private const DEBUG = false;
 
     private string $testUrl = 'https://core.test/api';
 
