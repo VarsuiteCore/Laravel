@@ -130,6 +130,7 @@ TEXT
             }
 
             $binary = storage_path('vscore/composer');
+            @chmod($binary, 0755);
             Process::fromShellCommandline($this->php() . ' ' . $binary . ' self-update --no-interaction');
         }
 
