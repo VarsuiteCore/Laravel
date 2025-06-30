@@ -13,6 +13,11 @@
             "VarsuiteCore\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "VarsuiteCore\\Tests\\": "tests/"
+        }
+    },
     "homepage": "https://vs-core.com",
     "authors": [
         {
@@ -40,6 +45,8 @@
         }
     },
     "require-dev": {
-        "laravel/framework": "^9.0|^10.0|^11.0|^12.0"
+        "laravel/framework": "^9.0|^10.0|^11.0|^12.0",
+        "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0",
+        "phpunit/phpunit": "^9"
     }
 }

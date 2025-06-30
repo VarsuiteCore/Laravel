@@ -6,15 +6,17 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Fluent;
-use Symfony\Component\Process\Process;
+use VarsuiteCore\Utils\Composer;
 
 class LaravelEnvironment
 {
     private Application $app;
+    private Composer $composer;
 
-    public function __construct(Application $app)
+    public function __construct(Application $app, Composer $composer)
     {
         $this->app = $app;
+        $this->composer = $composer;
     }
 
     public function toArray(): array
@@ -58,34 +60,17 @@ class LaravelEnvironment
             return [];
         }
         $packages = [];
-        $installed = Process::fromShellCommandline('composer show --direct --format=json')
-            ->setWorkingDirectory(base_path())
-            ->mustRun()
-            ->getOutput();
-        $installed = (new Fluent(json_decode($installed)))->array('installed');
-
-        $updates = Process::fromShellCommandline('composer outdated --format=json')
-            ->setWorkingDirectory(base_path())
-            ->mustRun()
-            ->getOutput();
-        $updates = (new Fluent(json_decode($updates)))
-            ->collect('installed')
-            ->keyBy('name')
-            ->map(function ($package) {
-                return $package->latest;
-            })
-            ->filter(function ($version) {
-                return $version !== '[none matched]';
-            });
+        $installed = $this->composer->installed();
+        $updates = $this->composer->availableUpdates();
 
         foreach ($installed as $package) {
             $package = new Fluent($package);
 
             $authors = [];
-            if (File::exists(base_path("vendor/{$package->string('name')}/composer.json"))) {
-                $composerJson = new Fluent(json_decode(File::get(base_path("vendor/{$package->string('name')}/composer.json"))));
+            if (File::exists(base_path("vendor/{$package->get('name')}/composer.json"))) {
+                $composerJson = $this->composer->decodeJson(base_path("vendor/{$package->get('name')}/composer.json"));
 
-                foreach ($composerJson->array('authors') as $author) {
+                foreach ($composerJson->get('authors', []) as $author) {
                     $authors[] = $author->name;
                 }
             }
@@ -93,23 +78,23 @@ class LaravelEnvironment
             if (blank($authors)) {
                 $authors = null;
             }
-            $url = $package->string('homepage')->toString();
+            $url = $package->get('homepage');
             if (blank($url)) {
-                $url = $package->string('source')->toString();
+                $url = $package->get('source');
             }
             if (blank($url)) {
                 $url = null;
             }
 
             $packages[] = [
-                'identifier' => $package->string('name')->toString(),
+                'identifier' => $package->get('name'),
                 'type' => 'dependency',
-                'name' => $package->string('name')->toString(),
+                'name' => $package->get('name'),
                 'enabled' => true,
                 'url' => $url,
                 'author' => $authors,
-                'version' => $package->string('version')->toString(),
-                'update_version' => $updates->get($package->string('name')->toString()),
+                'version' => $package->get('version'),
+                'update_version' => $updates->get($package->get('name')),
             ];
         }
 
