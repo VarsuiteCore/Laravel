@@ -15,7 +15,7 @@ use VarsuiteCore\Listeners\SyncFallbackListener;
 
 class VarsuiteCoreServiceProvider extends ServiceProvider
 {
-    private const VERSION = '0.0.2';
+    private const VERSION = '0.0.3';
 
     public function register(): void
     {
