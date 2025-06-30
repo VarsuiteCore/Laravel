@@ -31,6 +31,12 @@ class InitiateBackupJob extends CoreJob implements ShouldQueue
 
             // Take a database dump, place it into storage
             File::ensureDirectoryExists(storage_path('vscore'));
+            if (!File::exists(storage_path('vscore/.gitignore'))) {
+                File::put(storage_path('vscore/.gitignore'), <<<TEXT
+*
+!.gitignore
+TEXT);
+            }
             $domain = parse_url(config('app.url'), PHP_URL_HOST);
             $default = config('database.default');
             $driver = config("database.connections.{$default}.driver");

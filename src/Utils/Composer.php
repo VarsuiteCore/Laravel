@@ -4,9 +4,11 @@ namespace VarsuiteCore\Utils;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Fluent;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\Process\Process;
 use VarsuiteCore\Factories\ProcessFactory;
 
 /**
@@ -100,7 +102,35 @@ class Composer
     {
         $binary = (new ExecutableFinder())->find('composer');
         if (!$binary) {
-            throw new \RuntimeException('Unable to locate the Composer binary.');
+            if (!File::exists(storage_path('vscore/composer'))) {
+                // Download composer into Laravel's storage directory
+                File::ensureDirectoryExists(storage_path('vscore'));
+                if (!File::exists(storage_path('vscore/.gitignore'))) {
+                    File::put(storage_path('vscore/.gitignore'), <<<TEXT
+*
+!.gitignore
+TEXT
+                    );
+                }
+
+                $expectedChecksum = Http::throw()->get('https://composer.github.io/installer.sig')->body();
+                copy('https://getcomposer.org/installer', storage_path('vscore/composer-setup.php'));
+                $actualChecksum = hash_file('sha384', storage_path('vscore/composer-setup.php'));
+                if ($expectedChecksum !== $actualChecksum) {
+                    File::delete(storage_path('vscore/composer-setup.php'));
+                    throw new \RuntimeException('Composer checksum mismatch.');
+                }
+                Process::fromShellCommandline($this->php() . ' ' . storage_path('vscore/composer-setup.php') . ' --install-dir=' . storage_path('vscore') . ' --filename=composer')
+                    ->mustRun();
+                if (!File::exists(storage_path('vscore/composer'))) {
+                    File::delete(storage_path('vscore/composer-setup.php'));
+                    throw new \RuntimeException('Composer binary not installed correctly.');
+                }
+                File::delete(storage_path('vscore/composer-setup.php'));
+            }
+
+            $binary = storage_path('vscore/composer');
+            Process::fromShellCommandline($this->php() . ' ' . $binary . ' self-update --no-interaction');
         }
 
         return $binary;
