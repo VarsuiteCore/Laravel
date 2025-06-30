@@ -2,12 +2,11 @@
 
 namespace VarsuiteCore;
 
-use App\Models\User;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Fluent;
+use Symfony\Component\Process\Process;
 
 class LaravelEnvironment
 {
@@ -58,7 +57,6 @@ class LaravelEnvironment
         if (!File::exists(base_path('composer.json'))) {
             return [];
         }
-
         $packages = [];
         $installed = Process::fromShellCommandline('composer show --direct --format=json')
             ->setWorkingDirectory(base_path())
@@ -121,7 +119,7 @@ class LaravelEnvironment
     public function users(): array
     {
         return [
-            'users' => User::all()->map(function ($user) {
+            'users' => config('vscore.user_model')::select(['id', 'name', 'email', 'created_at'])->get()->map(function ($user) {
                 return [
                     'id' => $user->getKey(),
                     'display_name' => $user->name,
@@ -130,7 +128,7 @@ class LaravelEnvironment
                     'role' => null,
                     'created_at' => $user->created_at->toIso8601String(),
                 ];
-            }),
+            })->toArray(),
             'roles' => [],
         ];
     }
