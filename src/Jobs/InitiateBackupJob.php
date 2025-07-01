@@ -49,15 +49,14 @@ TEXT);
                     ->setPort(config("database.connections.{$default}.port"))
                     ->setUserName(config("database.connections.{$default}.username"))
                     ->setPassword(config("database.connections.{$default}.password"))
-                    ->setSocket(config("database.connections.{$default}.socket"))
+                    ->setSocket(config("database.connections.{$default}.unix_socket"))
                     ->setDefaultCharacterSet(config("database.connections.{$default}.charset")),
                 'pgsql' => PostgreSql::create()
                     ->setDbName(config("database.connections.{$default}.database"))
                     ->setHost(config("database.connections.{$default}.host"))
                     ->setPort(config("database.connections.{$default}.port"))
                     ->setUserName(config("database.connections.{$default}.username"))
-                    ->setPassword(config("database.connections.{$default}.password"))
-                    ->setSocket(config("database.connections.{$default}.socket")),
+                    ->setPassword(config("database.connections.{$default}.password")),
                 default => null,
             };
             if (null !== $dumper) {
