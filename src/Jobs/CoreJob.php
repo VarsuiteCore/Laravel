@@ -14,11 +14,10 @@ abstract class CoreJob
 {
     public function logger(): Logger
     {
-        return new Logger(
-            'core',
-            [
-                new RotatingFileHandler(storage_path('logs/core.log'), 7),
-            ]
-        );
+        $logger = new Logger('vscore');
+        $handler = new RotatingFileHandler(storage_path('logs/vscore.log'), 7);
+        $logger->pushHandler($handler);
+
+        return $logger;
     }
 }
