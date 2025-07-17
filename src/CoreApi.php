@@ -23,6 +23,37 @@ class CoreApi
         $this->send('POST', 'data', $data);
     }
 
+    public function startBackupUpload(string $backupId, string $checksum): \stdClass
+    {
+        return $this->send('POST', "backup/{$backupId}/upload", ['checksum' => $checksum])->data;
+    }
+
+    public function getUploadPartUrl(string $backupId, string $uploadId, string $filename, int $partNumber): \stdClass
+    {
+        return $this->send('PUT', "backup/{$backupId}/upload/{$uploadId}", [
+            'filename' => $filename,
+            'partNumber' => $partNumber,
+        ])->data;
+    }
+
+    public function completeBackupUpload(string $backupId, string $uploadId, string $filename, array $partIds, string $checksum): void
+    {
+        $this->send('DELETE', "backup/{$backupId}/upload/{$uploadId}", [
+            'action' => 'complete',
+            'filename' => $filename,
+            'partIds' => $partIds,
+            'checksum' => $checksum,
+        ]);
+    }
+
+    public function abortBackupUpload(string $backupId, ?string $uploadId, ?string $filename): void
+    {
+        $this->send('DELETE', "backup/{$backupId}/upload/{$uploadId}", [
+            'action' => 'abort',
+            'filename' => $filename,
+        ]);
+    }
+
     private function send(string $method, string $url, ?array $data = null): \stdClass
     {
         $method = strtoupper($method);
@@ -58,8 +89,8 @@ class CoreApi
             throw new InvalidSiteKeyException();
         }
 
-        if ($response->status() !== 200) {
-            throw new CoreCannotConnectException('Got status code of: ' . $response->status());
+        if ($response->status() < 200 && $response->status() > 300) {
+            throw new CoreCannotConnectException('Got status code of: ' . $response->status() . ' for url ' . $url);
         }
 
         $body = json_decode($response->body());
@@ -68,30 +99,5 @@ class CoreApi
         }
 
         return $body;
-    }
-
-    public function startBackupUpload(string $siteId, string $backupId, string $checksum): \stdClass
-    {
-        return $this->send('GET', "site/{$siteId}/backup/{$backupId}", ['checksum' => $checksum])->data;
-    }
-
-    public function getUploadPart(string $siteId, string $backupId): \stdClass
-    {
-        return $this->send('POST', "site/{$siteId}/backup/{$backupId}")->data;
-    }
-
-    public function markBackupComplete(string $siteId, string $backupId, array $partChecksums): void
-    {
-        $this->send('PUT', "site/{$siteId}/backup/{$backupId}", [
-            'success' => true,
-            'part_checksums' => $partChecksums,
-        ]);
-    }
-
-    public function markBackupFailed(string $siteId, string $backupId): void
-    {
-        $this->send('PUT', "site/{$siteId}/backup/{$backupId}", [
-            'success' => false,
-        ]);
     }
 }
