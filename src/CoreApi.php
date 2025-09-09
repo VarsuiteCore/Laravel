@@ -72,7 +72,7 @@ class CoreApi
             ->acceptJson()
             ->asJson()
             ->withToken($key)
-            ->withHeader('Signature', $signature)
+            ->withHeaders(['Signature' => $signature])
             ->when(self::DEBUG, function ($request) {
                 $request
                     ->dontTruncateExceptions() // Full exceptions for debugging
